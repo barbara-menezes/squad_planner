@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:squad_planner/screens/database_helper.dart';
 import 'package:squad_planner/screens/signing_screen.dart';
+import 'package:html_unescape/html_unescape.dart';
+import 'package:http/http.dart' as http;
+import 'package:translator/translator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,6 +15,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  String translate_title = 'Translation';
+  String translate_description = 'Translation';
   final formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -77,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: Color(0xff274D76),
         leading: IconButton(
-          icon: Icon(Icons.menu),
+          icon: Icon(Icons.menu, color: Colors.white),
           onPressed: () {
             showDialog(
               context: context,
@@ -111,9 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Text(
             'SQUAD-PLANNER',
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),
       ),
@@ -162,12 +166,44 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.all(10.0),
+                              padding:
+                                  EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
                               child: Text(
                                 myData[index]['title'],
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                              child: Text(
+                                translate_title,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
+                              child: Text(
+                                myData[index]['description'],
+                                style: TextStyle(
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                              child: Text(
+                                translate_description,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Colors.black,
                                 ),
                               ),
                             ),
@@ -344,7 +380,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () => showMyForm(null),
           child: Text(
             'Criar novo evento',
-            style: TextStyle(fontSize: 20),
+            style: TextStyle(fontSize: 20, color: Colors.white),
           ),
           style: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(
@@ -397,6 +433,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       border: UnderlineInputBorder(),
                       labelText: 'Titulo do Evento',
                     ),
+                    onChanged: (text) async {
+                      const _apiKey = 'AIzaSyCw2L2ZIhmqQ1kdn6hKrgUkdNys94YOnX8';
+                      const to = 'en';
+                      final url = Uri.parse(
+                          'https://translation.googleapis.com/language/translate/v2?target=$to&key=$_apiKey&q=$text');
+                      final response = await http.post(url);
+
+                      if (response.statusCode == 200) {
+                        final body = json.decode(response.body);
+                        final translations =
+                            body['data']['translations'] as List;
+                        HtmlUnescape()
+                            .convert(translations.first['translatedText']);
+                      }
+
+                      final translation =
+                          await text.translate(from: 'auto', to: 'en');
+
+                      setState(() {
+                        translate_title = translation.text;
+                      });
+                    },
                   ),
                   TextFormField(
                     controller: _descriptionController,
@@ -405,6 +463,28 @@ class _HomeScreenState extends State<HomeScreen> {
                       border: UnderlineInputBorder(),
                       labelText: 'Descricao',
                     ),
+                    onChanged: (text) async {
+                      const _apiKey = 'AIzaSyCw2L2ZIhmqQ1kdn6hKrgUkdNys94YOnX8';
+                      const to = 'en';
+                      final url = Uri.parse(
+                          'https://translation.googleapis.com/language/translate/v2?target=$to&key=$_apiKey&q=$text');
+                      final response = await http.post(url);
+
+                      if (response.statusCode == 200) {
+                        final body = json.decode(response.body);
+                        final translations =
+                            body['data']['translations'] as List;
+                        HtmlUnescape()
+                            .convert(translations.first['translatedText']);
+                      }
+
+                      final translation =
+                          await text.translate(from: 'auto', to: 'en');
+
+                      setState(() {
+                        translate_description = translation.text;
+                      });
+                    },
                   ),
                   TextFormField(
                     controller: _enderecoController,

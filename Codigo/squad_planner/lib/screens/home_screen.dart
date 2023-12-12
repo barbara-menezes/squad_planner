@@ -97,6 +97,38 @@ class _HomeScreenState extends State<HomeScreen> {
     print("Users in SQLite: $users");
   }
 
+  void _showEventDetails(int index) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Detalhes do Evento',
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 10.0),
+              Text(
+                'Título: ${myData[index]['title']}',
+                style: TextStyle(fontSize: 16.0),
+              ),
+              Text(
+                'Descrição: ${myData[index]['description']}',
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
@@ -188,220 +220,225 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       bool isParticipantEvent =
                           myData[index]['isParticipantEvent'] ?? false;
-                      return Card(
-                        color: Color(0xffe9edf1),
-                        margin: const EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding:
-                                  EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
-                              child: Text(
-                                myData[index]['title'],
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
-                                ),
-                              ),
-                            ),
-                            // Padding(
-                            //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
-                            //   child: Text(
-                            //     translate_title,
-                            //     style: const TextStyle(
-                            //       fontSize: 20,
-                            //       color: Colors.black,
-                            //       fontWeight: FontWeight.bold,
-                            //     ),
-                            //   ),
-                            // ),
-                            Padding(
-                              padding:
-                                  EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
-                              child: Text(
-                                myData[index]['description'],
-                                style: TextStyle(
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
-                            // Padding(
-                            //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
-                            //   child: Text(
-                            //     translate_description,
-                            //     style: const TextStyle(
-                            //       fontSize: 15,
-                            //       color: Colors.black,
-                            //     ),
-                            //   ),
-                            // ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        const TextSpan(
-                                          text: 'Data e Horário: ',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.grey,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                      ],
+                      return GestureDetector(
+                          onTap: () => _showEventDetails(index),
+                          child: Card(
+                            color: Color(0xffe9edf1),
+                            margin: const EdgeInsets.all(15),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding:
+                                      EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
+                                  child: Text(
+                                    myData[index]['title'],
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
                                     ),
                                   ),
-                                  Expanded(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment
-                                          .spaceEvenly, // Alinha o texto ao centro
-                                      children: [
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              const TextSpan(
-                                                text: 'Confirmações: ',
-                                                style: TextStyle(
+                                ),
+                                // Padding(
+                                //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                                //   child: Text(
+                                //     translate_title,
+                                //     style: const TextStyle(
+                                //       fontSize: 20,
+                                //       color: Colors.black,
+                                //       fontWeight: FontWeight.bold,
+                                //     ),
+                                //   ),
+                                // ),
+                                Padding(
+                                  padding:
+                                      EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
+                                  child: Text(
+                                    myData[index]['description'],
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ),
+                                // Padding(
+                                //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                                //   child: Text(
+                                //     translate_description,
+                                //     style: const TextStyle(
+                                //       fontSize: 15,
+                                //       color: Colors.black,
+                                //     ),
+                                //   ),
+                                // ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            const TextSpan(
+                                              text: 'Data e Horário: ',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.grey,
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment
+                                              .spaceEvenly, // Alinha o texto ao centro
+                                          children: [
+                                            RichText(
+                                              text: TextSpan(
+                                                children: [
+                                                  const TextSpan(
+                                                    text: 'Confirmações: ',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.grey,
+                                                      fontSize: 15,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      RichText(
+                                        text: TextSpan(
+                                          text:
+                                              '${myData[index]['datas']} ${myData[index]['horario']}',
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment
+                                              .spaceEvenly, // Alinha o texto ao centro
+                                          children: [
+                                            RichText(
+                                              text: TextSpan(
+                                                text: 'N/A',
+                                                style: const TextStyle(
+                                                  color: Color(0xff274D76),
                                                   fontWeight: FontWeight.bold,
-                                                  color: Colors.grey,
-                                                  fontSize: 15,
                                                 ),
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  RichText(
-                                    text: TextSpan(
-                                      text:
-                                          '${myData[index]['datas']} ${myData[index]['horario']}',
-                                      style: const TextStyle(
-                                        color: Colors.black,
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  Expanded(
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment
-                                          .spaceEvenly, // Alinha o texto ao centro
-                                      children: [
-                                        RichText(
-                                          text: TextSpan(
-                                            text: 'N/A',
-                                            style: const TextStyle(
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Row(
+                                    children: [
+                                      Wrap(
+                                        spacing:
+                                            -8, // Valor negativo para reduzir o espaço entre os avatares
+                                        children: [
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Color(0xffe9edf1),
+                                                  width: 2),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: CircleAvatar(
+                                              backgroundColor:
+                                                  Color(0xff274D76),
+                                              radius: 20,
+                                            ),
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              border: Border.all(
+                                                  color: Color(0xffe9edf1),
+                                                  width: 2),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: CircleAvatar(
+                                              backgroundColor:
+                                                  Color(0xff274D76),
+                                              radius: 20,
+                                            ),
+                                          ),
+                                          // Adicione quantos avatares desejar, seguindo a mesma estrutura acima
+                                        ],
+                                      ),
+                                      Expanded(child: Container()),
+                                      if (!isParticipantEvent &&
+                                          myData[index]['userId'] == user?.uid)
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              showMyForm(myData[index]['id']),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xffe9edf1),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              side: BorderSide(
+                                                  color: Color(0xff274D76)),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Editar',
+                                            style: TextStyle(
                                               color: Color(0xff274D76),
-                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Row(
-                                children: [
-                                  Wrap(
-                                    spacing:
-                                        -8, // Valor negativo para reduzir o espaço entre os avatares
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Color(0xffe9edf1),
-                                              width: 2),
-                                          shape: BoxShape.circle,
+                                      SizedBox(width: 10),
+                                      if (!isParticipantEvent &&
+                                          myData[index]['userId'] == user?.uid)
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              deleteItem(myData[index]['id']),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Color(0xffe9edf1),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              side: BorderSide(
+                                                  color: Color(0xff274D76)),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Deletar',
+                                            style: TextStyle(
+                                              color: Color(0xff274D76),
+                                            ), // Define a cor azul para o texto
+                                          ),
                                         ),
-                                        child: CircleAvatar(
-                                          backgroundColor: Color(0xff274D76),
-                                          radius: 20,
-                                        ),
-                                      ),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                              color: Color(0xffe9edf1),
-                                              width: 2),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: CircleAvatar(
-                                          backgroundColor: Color(0xff274D76),
-                                          radius: 20,
-                                        ),
-                                      ),
-                                      // Adicione quantos avatares desejar, seguindo a mesma estrutura acima
                                     ],
                                   ),
-                                  Expanded(child: Container()),
-                                  if (!isParticipantEvent &&
-                                      myData[index]['userId'] == user?.uid)
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          showMyForm(myData[index]['id']),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xffe9edf1),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          side: BorderSide(
-                                              color: Color(0xff274D76)),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Editar',
-                                        style: TextStyle(
-                                          color: Color(0xff274D76),
-                                        ),
-                                      ),
-                                    ),
-                                  SizedBox(width: 10),
-                                  if (!isParticipantEvent &&
-                                      myData[index]['userId'] == user?.uid)
-                                    ElevatedButton(
-                                      onPressed: () =>
-                                          deleteItem(myData[index]['id']),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Color(0xffe9edf1),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          side: BorderSide(
-                                              color: Color(0xff274D76)),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Deletar',
-                                        style: TextStyle(
-                                          color: Color(0xff274D76),
-                                        ), // Define a cor azul para o texto
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                      );
+                                )
+                              ],
+                            ),
+                          ));
                     },
                   ),
                 ),

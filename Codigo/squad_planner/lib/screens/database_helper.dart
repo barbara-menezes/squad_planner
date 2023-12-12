@@ -6,7 +6,7 @@ import 'package:squad_planner/api/firebase_api.dart';
 class DatabaseHelper {
   static Future<sql.Database> db() async {
     return sql.openDatabase(
-      'bdfappfirebase14.db',
+      'bdfappfirebase15.db',
       version: 1,
       onCreate: (sql.Database database, int version) async {
         await createTables(database);

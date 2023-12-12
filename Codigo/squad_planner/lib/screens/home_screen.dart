@@ -99,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xff274D76),
@@ -154,12 +155,12 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           : Column(
               children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    await printUsers();
-                  },
-                  child: Text('Mostrar Usuários'),
-                ),
+                // ElevatedButton(
+                //   onPressed: () async {
+                //     await printUsers();
+                //   },
+                //   child: Text('Mostrar Usuários'),
+                // ),
                 Padding(
                   padding: const EdgeInsets.all(9.0),
                   child: Row(
@@ -185,6 +186,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     shrinkWrap: true,
                     itemCount: myData.length,
                     itemBuilder: (context, index) {
+                      bool isParticipantEvent =
+                          myData[index]['isParticipantEvent'] ?? false;
                       return Card(
                         color: Color(0xffe9edf1),
                         margin: const EdgeInsets.all(15),
@@ -350,43 +353,49 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ],
                                   ),
                                   Expanded(child: Container()),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        showMyForm(myData[index]['id']),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xffe9edf1),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                        side: BorderSide(
-                                            color: Color(0xff274D76)),
+                                  if (!isParticipantEvent &&
+                                      myData[index]['userId'] == user?.uid)
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          showMyForm(myData[index]['id']),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xffe9edf1),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          side: BorderSide(
+                                              color: Color(0xff274D76)),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Editar',
+                                        style: TextStyle(
+                                          color: Color(0xff274D76),
+                                        ),
                                       ),
                                     ),
-                                    child: Text(
-                                      'Editar',
-                                      style: TextStyle(
-                                          color: Color(
-                                              0xff274D76)), // Define a cor azul para o texto
-                                    ),
-                                  ),
                                   SizedBox(width: 10),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        deleteItem(myData[index]['id']),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xffe9edf1),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                        side: BorderSide(
-                                            color: Color(0xff274D76)),
+                                  if (!isParticipantEvent &&
+                                      myData[index]['userId'] == user?.uid)
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          deleteItem(myData[index]['id']),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xffe9edf1),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          side: BorderSide(
+                                              color: Color(0xff274D76)),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Deletar',
+                                        style: TextStyle(
+                                          color: Color(0xff274D76),
+                                        ), // Define a cor azul para o texto
                                       ),
                                     ),
-                                    child: Text(
-                                      'Deletar',
-                                      style: TextStyle(
-                                          color: Color(
-                                              0xff274D76)), // Define a cor azul para o texto
-                                    ),
-                                  ),
                                 ],
                               ),
                             )

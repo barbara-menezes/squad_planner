@@ -38,22 +38,35 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshData(); // Loading the data when the app starts
   }
 
+  // Modificação da função _refreshData na HomeScreen
   _refreshData() async {
-    final data = await DatabaseHelper.getItems();
-    setState(() {
-      myData = data;
-    });
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final data = await DatabaseHelper.getItems(user.uid);
+      setState(() {
+        myData = data;
+      });
+    }
   }
 
   Future<void> addItem() async {
-    await DatabaseHelper.createItem(
+    // Obtenha o usuário autenticado
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Adicione um novo evento associado ao usuário autenticado
+      await DatabaseHelper.createItem(
         _titleController.text,
         _descriptionController.text,
         _enderecoController.text,
         _horarioController.text,
         _datasController.text,
-        _participantesController.text);
-    _refreshData();
+        _participantesController.text,
+        user.uid, // Passe o ID do usuário
+      );
+      _refreshData();
+    }
   }
 
   Future<void> updateItem(int id) async {
@@ -176,17 +189,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
-                              child: Text(
-                                translate_title,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
+                            // Padding(
+                            //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                            //   child: Text(
+                            //     translate_title,
+                            //     style: const TextStyle(
+                            //       fontSize: 20,
+                            //       color: Colors.black,
+                            //       fontWeight: FontWeight.bold,
+                            //     ),
+                            //   ),
+                            // ),
                             Padding(
                               padding:
                                   EdgeInsets.fromLTRB(15.0, 5.0, 15.0, 5.0),
@@ -197,16 +210,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
-                              child: Text(
-                                translate_description,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ),
+                            // Padding(
+                            //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                            //   child: Text(
+                            //     translate_description,
+                            //     style: const TextStyle(
+                            //       fontSize: 15,
+                            //       color: Colors.black,
+                            //     ),
+                            //   ),
+                            // ),
                             Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10.0),

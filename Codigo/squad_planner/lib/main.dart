@@ -1,10 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:squad_planner/screens/signing_screen.dart';
+import 'api/firebase_api.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  FirebaseApi firebaseApi = FirebaseApi();
+  await firebaseApi.initNotifications();
   runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
     home: SignInScreen(),

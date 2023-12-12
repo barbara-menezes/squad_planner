@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:squad_planner/screens/database_helper.dart';
 
 class FirebaseApi {
   final _firebaseMessaging = FirebaseMessaging.instance;
@@ -121,6 +123,43 @@ class FirebaseApi {
     } else {
       print(
           'Falha ao enviar notificação para o usuário $userId. Código: ${response.statusCode}');
+    }
+  }
+
+  static Future<User?> createUser({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      print("Creating user with name: $name, email: $email");
+
+      print("Before createUserWithEmailAndPassword");
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      print("After createUserWithEmailAndPassword");
+
+      // Obtenha o ID do usuário recém-criado
+      String userId = userCredential.user?.uid ?? '';
+
+      // Insira os dados do usuário no SQLite
+      await DatabaseHelper.createUser(
+        userId: userId,
+        name: name,
+        email: email,
+        // Adicione outros campos conforme necessário
+      );
+
+      print("User created successfully. User ID: $userId");
+
+      return userCredential.user;
+    } catch (e) {
+      // Handle errors
+      print("Error creating user: $e");
+      return null;
     }
   }
 }

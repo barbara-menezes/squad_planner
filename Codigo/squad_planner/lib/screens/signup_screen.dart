@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:squad_planner/api/firebase_api.dart';
 import 'package:squad_planner/screens/signing_screen.dart';
 import '../reusable_widgets/reusable_widget.dart';
 import 'home_screen.dart';
@@ -61,19 +62,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(
                   height: 20,
                 ),
-                firebaseUIButton(context, "Registrar", () {
-                  FirebaseAuth.instance
-                      .createUserWithEmailAndPassword(
-                          email: _emailTextController.text,
-                          password: _passwordTextController.text)
-                      .then((value) {
+                firebaseUIButton(context, "Registrar", () async {
+                  try {
+                    await FirebaseApi.createUser(
+                      name: _userNameTextController.text,
+                      email: _emailTextController.text,
+                      password: _passwordTextController.text,
+                    );
+                    // Se o usuário foi criado com sucesso, navegue para a tela principal
                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: ((context) => HomeScreen())));
-                  }).onError((error, stackTrace) {
-                    print("Error ${error.toString()}");
-                  });
+                      context,
+                      MaterialPageRoute(builder: (context) => HomeScreen()),
+                    );
+                  } catch (error) {
+                    // Lide com erros, exiba mensagens de erro ou tome outras medidas
+                    print("Error during user registration: $error");
+                  }
                 }),
                 signInOption(),
               ],

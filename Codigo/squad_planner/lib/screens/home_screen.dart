@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
+      // Obtenha os eventos associados ao usuário usando a tabela user_events
       final data = await DatabaseHelper.getItems(user.uid);
       setState(() {
         myData = data;
@@ -88,6 +89,11 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.green,
     ));
     _refreshData();
+  }
+
+  static Future<void> printUsers() async {
+    final users = await DatabaseHelper.getUsers();
+    print("Users in SQLite: $users");
   }
 
   @override
@@ -147,6 +153,12 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           : Column(
               children: [
+                ElevatedButton(
+                  onPressed: () async {
+                    await printUsers();
+                  },
+                  child: Text('Mostrar Usuários'),
+                ),
                 Padding(
                   padding: const EdgeInsets.all(9.0),
                   child: Row(

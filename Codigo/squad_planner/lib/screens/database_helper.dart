@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart' as sql;
 import 'package:squad_planner/api/firebase_api.dart';
@@ -5,7 +6,7 @@ import 'package:squad_planner/api/firebase_api.dart';
 class DatabaseHelper {
   static Future<sql.Database> db() async {
     return sql.openDatabase(
-      'bdfappfire.db',
+      'bdfappfirebase10.db',
       version: 1,
       onCreate: (sql.Database database, int version) async {
         await createTables(database);
@@ -26,6 +27,22 @@ class DatabaseHelper {
       createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
     """);
+
+    await database.execute("""CREATE TABLE users(
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id TEXT,
+    name TEXT,
+    email TEXT,
+    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )
+  """);
+
+    await database.execute("""CREATE TABLE user_events(
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    user_id TEXT,
+    event_id INTEGER,
+    FOREIGN KEY (event_id) REFERENCES items (id) ON DELETE CASCADE
+  )""");
   }
 
 // id: the id of a item
@@ -55,10 +72,14 @@ class DatabaseHelper {
     final id = await db.insert('items', data,
         conflictAlgorithm: sql.ConflictAlgorithm.replace);
 
-    // Obter a lista de participantes
-    final participantsList = participantes!.split(',');
+    // Associe o evento ao usuário localmente no SQLite
+    await db.insert('user_events', {
+      'user_id': userId,
+      'event_id': id,
+    });
 
-    // Enviar notificação para cada participante
+    // Notificar participantes, como você já faz atualmente
+    final participantsList = participantes!.split(',');
     for (String participantId in participantsList) {
       if (participantId != userId) {
         FirebaseApi.sendNotification(
@@ -120,5 +141,30 @@ class DatabaseHelper {
     } catch (err) {
       debugPrint("Something went wrong when deleting an item: $err");
     }
+  }
+
+  @override
+  static Future<void> createUser({
+    required String userId,
+    required String name,
+    required String email,
+    // Adicione outros campos conforme necessário
+  }) async {
+    final db = await DatabaseHelper.db();
+
+    final data = {
+      'user_id': userId,
+      'name': name,
+      'email': email,
+      // Adicione outros campos conforme necessário
+    };
+
+    await db.insert('users', data,
+        conflictAlgorithm: sql.ConflictAlgorithm.replace);
+  }
+
+  static Future<List<Map<String, dynamic>>> getUsers() async {
+    final db = await DatabaseHelper.db();
+    return db.query('users');
   }
 }

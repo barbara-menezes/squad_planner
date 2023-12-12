@@ -38,13 +38,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshData(); // Loading the data when the app starts
   }
 
-  // Modificação da função _refreshData na HomeScreen
   _refreshData() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // Obtenha os eventos associados ao usuário usando a tabela user_events
-      final data = await DatabaseHelper.getItems(user.uid);
+      final userEvents = await DatabaseHelper.getItems(user.uid);
+      final participantEvents =
+          await DatabaseHelper.getParticipantEvents(user.uid);
+      final data = [...userEvents, ...participantEvents];
+
       setState(() {
         myData = data;
       });
@@ -52,11 +54,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> addItem() async {
-    // Obtenha o usuário autenticado
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // Adicione um novo evento associado ao usuário autenticado
       await DatabaseHelper.createItem(
         _titleController.text,
         _descriptionController.text,
@@ -64,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _horarioController.text,
         _datasController.text,
         _participantesController.text,
-        user.uid, // Passe o ID do usuário
+        user.uid,
       );
       _refreshData();
     }
@@ -72,13 +72,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> updateItem(int id) async {
     await DatabaseHelper.updateItem(
-        id,
-        _titleController.text,
-        _descriptionController.text,
-        _enderecoController.text,
-        _horarioController.text,
-        _datasController.text,
-        _participantesController.text);
+      id,
+      _titleController.text,
+      _descriptionController.text,
+      _enderecoController.text,
+      _horarioController.text,
+      _datasController.text,
+      _participantesController.text,
+    );
     _refreshData();
   }
 

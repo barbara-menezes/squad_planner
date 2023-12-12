@@ -6,7 +6,7 @@ import 'package:squad_planner/api/firebase_api.dart';
 class DatabaseHelper {
   static Future<sql.Database> db() async {
     return sql.openDatabase(
-      'bdfappfirebase10.db',
+      'bdfappfirebase14.db',
       version: 1,
       onCreate: (sql.Database database, int version) async {
         await createTables(database);
@@ -59,6 +59,17 @@ class DatabaseHelper {
   ) async {
     final db = await DatabaseHelper.db();
 
+    // Verificar se o evento já foi criado pelo usuário
+    final existingEvent = await db.rawQuery('''
+    SELECT * FROM items
+    WHERE title = ? AND userId = ?
+  ''', [title, userId]);
+
+    if (existingEvent.isNotEmpty) {
+      // O evento já existe para o usuário
+      return -1; // Retornar um valor especial para indicar que o evento não foi criado
+    }
+
     final data = {
       'title': title,
       'description': description,
@@ -72,25 +83,71 @@ class DatabaseHelper {
     final id = await db.insert('items', data,
         conflictAlgorithm: sql.ConflictAlgorithm.replace);
 
-    // Associe o evento ao usuário localmente no SQLite
-    await db.insert('user_events', {
-      'user_id': userId,
-      'event_id': id,
-    });
+    // // Associe o evento ao usuário localmente no SQLite apenas se for o criador
+    // await db.insert('user_events', {
+    //   'user_id': userId,
+    //   'event_id': id,
+    // });
 
-    // Notificar participantes, como você já faz atualmente
+    // Notificar participantes
     final participantsList = participantes!.split(',');
-    for (String participantId in participantsList) {
-      if (participantId != userId) {
-        FirebaseApi.sendNotification(
-          title!,
-          'Novo evento criado: $title',
-          userId: participantId,
-        );
+    for (String participantEmail in participantsList) {
+      if (participantEmail != userId) {
+        // Obter o ID do participante com base no e-mail
+        final participantId = await getUserIdByEmail(participantEmail);
+
+        if (participantId != null) {
+          // Verificar se o evento já foi associado ao participante
+          final existingEvent = await db.rawQuery('''
+          SELECT * FROM user_events
+          WHERE user_id = ? AND event_id = ?
+        ''', [participantId, id]);
+
+          // Adicionar o evento associado aos usuários participantes, se não existir
+          if (existingEvent.isEmpty) {
+            await db.insert('user_events', {
+              'user_id': participantId,
+              'event_id': id,
+            });
+
+            FirebaseApi.sendNotification(
+              title!,
+              'Novo evento criado: $title',
+              userId: participantId,
+            );
+          }
+        }
       }
     }
 
     return id;
+  }
+
+  static Future<String?> getUserIdByEmail(String email) async {
+    final db = await DatabaseHelper.db();
+
+    final result = await db.rawQuery('''
+    SELECT user_id FROM users
+    WHERE email = ?
+  ''', [email]);
+
+    if (result.isNotEmpty) {
+      return result.first['user_id'] as String;
+    } else {
+      return null;
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> getParticipantEvents(
+      String userId) async {
+    final db = await DatabaseHelper.db();
+    return db.rawQuery('''
+    SELECT items.*
+    FROM items
+    INNER JOIN user_events ON items.id = user_events.event_id
+    WHERE user_events.user_id = ?
+    ORDER BY items.id
+  ''', [userId]);
   }
 
   static Future<List<Map<String, dynamic>>> getItems(String userId) async {

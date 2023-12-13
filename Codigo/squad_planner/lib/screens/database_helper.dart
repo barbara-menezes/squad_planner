@@ -1,13 +1,13 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart' as sql;
+import 'package:sqflite/sqflite.dart';
 import 'package:squad_planner/api/firebase_api.dart';
 
 class DatabaseHelper {
   static Future<sql.Database> db() async {
     return sql.openDatabase(
-      'bdfappfirebase15.db',
-      version: 1,
+      'bdfappfirenew.db',
+      version: 3,
       onCreate: (sql.Database database, int version) async {
         await createTables(database);
       },
@@ -15,47 +15,84 @@ class DatabaseHelper {
   }
 
   static Future<void> createTables(sql.Database database) async {
-    await database.execute("""CREATE TABLE items(
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-      title TEXT,
-      description TEXT,
-      endereco TEXT,
-      horario TEXT,
-      datas TEXT,
-      participantes TEXT,
-      userId TEXT,  -- Adicione a coluna userId
-      createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-    """);
+    // Verifique se as tabelas já existem antes de tentar criá-las
+    bool itemsTableExists = await database
+        .rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='items'")
+        .then((result) => result.isNotEmpty);
 
-    await database.execute("""CREATE TABLE users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    user_id TEXT,
-    name TEXT,
-    email TEXT,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-  )
-  """);
+    bool usersTableExists = await database
+        .rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+        .then((result) => result.isNotEmpty);
 
-    await database.execute("""CREATE TABLE user_events(
-    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    user_id TEXT,
-    event_id INTEGER,
-    FOREIGN KEY (event_id) REFERENCES items (id) ON DELETE CASCADE
-  )""");
+    bool userEventsTableExists = await database
+        .rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='user_events'")
+        .then((result) => result.isNotEmpty);
+
+    bool confirmationsTableExists = await database
+        .rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='Confirmations'")
+        .then((result) => result.isNotEmpty);
+
+    if (!itemsTableExists ||
+        !usersTableExists ||
+        !userEventsTableExists ||
+        !confirmationsTableExists) {
+      await database.transaction((txn) async {
+        await txn.execute("""CREATE TABLE items(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        title TEXT,
+        description TEXT,
+        endereco TEXT,
+        horario TEXT,
+        datas TEXT,
+        participantes TEXT,
+        userId TEXT,
+        confirmados INTEGER DEFAULT 0,  -- Corrija o nome da coluna
+        createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+      """);
+
+        await txn.execute("""CREATE TABLE users(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        user_id TEXT,
+        name TEXT,
+        email TEXT,
+        createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+      """);
+
+        await txn.execute("""CREATE TABLE user_events(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        user_id TEXT,
+        event_id INTEGER,
+        FOREIGN KEY (event_id) REFERENCES items (id) ON DELETE CASCADE
+      )""");
+
+        await txn.execute("""CREATE TABLE Confirmations(
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        eventId INTEGER,
+        participantId TEXT,
+        FOREIGN KEY (eventId) REFERENCES items (id) ON DELETE CASCADE
+      )""");
+      });
+    }
   }
 
 // id: the id of a item
 // title, description: name and description of  activity
 // created_at: the time that the item was created. It will be automatically handled by SQLite
   static Future<int> createItem(
-    String? title,
-    String? description,
-    String? endereco,
-    String? horario,
-    String? datas,
-    String? participantes,
+    String title,
+    String description,
+    String endereco,
+    String horario,
+    String datas,
+    String participantes,
     String userId,
+    int confirmados,
   ) async {
     final db = await DatabaseHelper.db();
 
@@ -78,6 +115,7 @@ class DatabaseHelper {
       'datas': datas,
       'participantes': participantes,
       'userId': userId,
+      'confirmados': confirmados,
     };
 
     final id = await db.insert('items', data,
@@ -161,6 +199,57 @@ class DatabaseHelper {
   static Future<List<Map<String, dynamic>>> getItem(int id) async {
     final db = await DatabaseHelper.db();
     return db.query('items', where: "id = ?", whereArgs: [id], limit: 1);
+  }
+
+  static Future<void> createConfirmation(
+      int eventId, String participantId) async {
+    final db = await DatabaseHelper.db();
+    await db.insert(
+      'Confirmations',
+      {'eventId': eventId, 'participantId': participantId},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  static Future<List<Map<String, dynamic>>> getConfirmations(
+      int eventId) async {
+    final db = await DatabaseHelper.db();
+    return db
+        .query('Confirmations', where: 'eventId = ?', whereArgs: [eventId]);
+  }
+
+  static Future<void> confirmAttendance(int eventId) async {
+    final db = await DatabaseHelper.db();
+
+    await db.rawUpdate('''
+    UPDATE items
+    SET confirmados = confirmados + 1
+    WHERE id = ?
+  ''', [eventId]);
+  }
+
+  static Future<void> updateConfirmations(
+      int eventId, List<String> participants) async {
+    final db = await DatabaseHelper.db();
+
+    // Deleta as confirmações existentes para o evento
+    await db
+        .delete('Confirmations', where: 'eventId = ?', whereArgs: [eventId]);
+
+    // Insere as novas confirmações
+    for (var participantId in participants) {
+      await db.insert(
+        'Confirmations',
+        {'eventId': eventId, 'participantId': participantId},
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+
+    // Imprime os valores armazenados no banco após a atualização
+    final confirmationsAfterUpdate = await db
+        .query('Confirmations', where: 'eventId = ?', whereArgs: [eventId]);
+    print(
+        'Confirmations after update for eventId=$eventId: $confirmationsAfterUpdate');
   }
 
   // Update an item by id

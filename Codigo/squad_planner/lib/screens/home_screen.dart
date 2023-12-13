@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:squad_planner/screens/database_helper.dart';
@@ -58,14 +59,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (user != null) {
       await DatabaseHelper.createItem(
-        _titleController.text,
-        _descriptionController.text,
-        _enderecoController.text,
-        _horarioController.text,
-        _datasController.text,
-        _participantesController.text,
-        user.uid,
-      );
+          _titleController.text,
+          _descriptionController.text,
+          _enderecoController.text,
+          _horarioController.text,
+          _datasController.text,
+          _participantesController.text,
+          user.uid,
+          0);
       _refreshData();
     }
   }
@@ -98,35 +99,165 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showEventDetails(int index) {
+    if (index < 0 || index >= myData.length) {
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
-        return Container(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Detalhes do Evento',
-                style: TextStyle(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold,
+        var event = myData[index];
+        var title = event['title'] ?? 'N/A';
+        var description = event['description'] ?? 'N/A';
+        var endereco = event['endereco'] ?? 'N/A';
+        var horario = event['horario'] ?? 'N/A';
+        var datas = event['datas'] ?? 'N/A';
+
+        var confirmations = event['confirmations'];
+        var confirmationsCount =
+            (confirmations != null && confirmations is List)
+                ? confirmations.length.toString()
+                : '0';
+
+        return SingleChildScrollView(
+          child: Container(
+            padding: EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Detalhes do Evento',
+                  style: TextStyle(
+                    fontSize: 20.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              SizedBox(height: 10.0),
-              Text(
-                'Título: ${myData[index]['title']}',
-                style: TextStyle(fontSize: 16.0),
-              ),
-              Text(
-                'Descrição: ${myData[index]['description']}',
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ],
+                SizedBox(height: 10.0),
+                _buildDetailItem('Título', title),
+                _buildDetailItem('Descrição', description),
+                _buildDetailItem('Endereço', endereco),
+                _buildDetailItem('Horário', horario),
+                _buildDetailItem('Data', datas),
+                _buildDetailItem('Confirmados', confirmationsCount),
+                _buildConfirmationButton(event['id'], index),
+              ],
+            ),
           ),
         );
       },
     );
+  }
+
+  Widget _buildDetailItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label:',
+          style: TextStyle(
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        SizedBox(height: 5.0),
+        Text(
+          value,
+          style: TextStyle(fontSize: 16.0),
+        ),
+        SizedBox(height: 10.0),
+      ],
+    );
+  }
+
+  Widget _buildConfirmationButton(int eventId, int index) {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null && myData[index]['userId'] != user.uid) {
+      return ElevatedButton(
+        onPressed: () async {
+          await _confirmAttendance(eventId, index);
+
+          // Atualizar a interface do usuário
+          setState(() {});
+
+          // Fechar o modal
+          Navigator.pop(context);
+        },
+        child: Text('Confirme sua presença'),
+      );
+    } else {
+      return SizedBox.shrink();
+    }
+  }
+
+  Future<void> _confirmAttendance(int eventId, int index) async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final existingData =
+          myData.firstWhere((element) => element['id'] == eventId);
+
+      // Adicione prints para depurar
+      print('existingData[\'confirmados\']: ${existingData['confirmados']}');
+
+      // Verifique o tipo do campo confirmados
+      if (existingData['confirmados'] is int) {
+        int confirmados = existingData['confirmados'] as int;
+
+        // Verifique se o usuário já confirmou presença
+        if (confirmados == 0) {
+          // Crie um novo mapa com os dados atualizados
+          Map<String, dynamic> updatedData = Map.from(existingData);
+          updatedData['confirmados'] = confirmados + 1;
+
+          // Atualize a confirmação no banco de dados
+          await DatabaseHelper.confirmAttendance(eventId);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Presença confirmada com sucesso"),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Atualize a lista local e a interface do usuário
+          setState(() {
+            myData[index] = updatedData;
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Você já confirmou presença"),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        // Se o campo confirmados não estiver presente ou não for do tipo int
+        // Trate isso como um valor inicial de 1
+        // Crie um novo mapa com os dados atualizados
+        Map<String, dynamic> updatedData = Map.from(existingData);
+        updatedData['confirmados'] = 1;
+
+        // Atualize a confirmação no banco de dados
+        await DatabaseHelper.confirmAttendance(eventId);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Presença confirmada com sucesso"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Atualize a lista local e a interface do usuário
+        setState(() {
+          myData[index] = updatedData;
+        });
+      }
+    }
   }
 
   @override

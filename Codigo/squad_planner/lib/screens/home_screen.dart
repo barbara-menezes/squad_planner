@@ -187,6 +187,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Navigator.pop(context);
         },
         child: Text('Confirme sua presença'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xff274D76),
+          foregroundColor: Colors.white,
+        ),
       );
     } else {
       return SizedBox.shrink();
@@ -391,16 +395,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                 ),
-                                // Padding(
-                                //   padding: EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
-                                //   child: Text(
-                                //     translate_description,
-                                //     style: const TextStyle(
-                                //       fontSize: 15,
-                                //       color: Colors.black,
-                                //     ),
-                                //   ),
-                                // ),
+                                Padding(
+                                  padding:
+                                      EdgeInsets.fromLTRB(15.0, 0, 15.0, 5.0),
+                                  child: Text(
+                                    translate_description,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10.0),

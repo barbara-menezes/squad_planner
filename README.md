@@ -22,4 +22,5 @@ Integrantes:
 **Link da Apresentacao:** https://youtu.be/mgjC-luUnlU
 
 
-"Não concedo permissão para a utilização deste projeto para quaisquer fins que não estejam em conformidade com os direitos autorais. Este repositório está disponível apenas para análise pelos professores da Universidade PUC Minas, no âmbito da disciplina Laboratório de Desenvolvimento de Aplicações Móveis e Distribuídas 2/2023."
+Proibida a divulgação, publicação ou qualquer uso não autorizado deste conteúdo.
+Não concedo permissão para a utilização deste projeto para quaisquer fins que não estejam em conformidade com os direitos autorais. Este repositório está disponível apenas para análise pelos professores da Universidade PUC Minas, no âmbito da disciplina Laboratório de Desenvolvimento de Aplicações Móveis e Distribuídas 2/2023.
